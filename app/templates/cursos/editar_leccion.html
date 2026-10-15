@@ -253,7 +253,7 @@
                     </label>
                     {% if leccion.imagen_portada %}
                     <div class="mb-2">
-                        <img src="{{ leccion.imagen_portada }}" alt="Portada actual" class="img-fluid rounded-3 shadow-sm" style="max-height:140px; object-fit:cover;">
+                        <img src="{{ leccion.imagen_portada }}" alt="Portada actual" class="img-fluid rounded-3 shadow-sm" style="max-height:160px; object-fit:contain; background:#f1f5f9; padding:4px;">
                         <div class="mt-1 d-flex align-items-center gap-2">
                             <span class="text-muted" style="font-size:0.8rem;"><i class="bi bi-check-circle-fill text-success me-1"></i>Portada actual</span>
                             <label class="form-check-label text-danger" style="font-size:0.8rem; cursor:pointer;">
@@ -270,7 +270,7 @@
                         ondragleave="this.style.borderColor='#cbd5e1';"
                         ondrop="manejarDropPortada(event)">
                         <img id="portada-preview" src="" alt="" class="d-none"
-                            style="object-fit: cover; position: absolute; top:0; left:0; width:100%; height:100%;">
+                            style="object-fit: contain; position: absolute; top:0; left:0; width:100%; height:100%; background:#f1f5f9; padding:6px;">
                         <div id="portada-placeholder" class="d-flex align-items-center justify-content-center gap-2 h-100 py-3">
                             <i class="bi bi-cloud-arrow-up fs-2 text-success"></i>
                             <span class="fw-bold text-secondary" style="font-size:0.9rem;">{{ 'Cambiar imagen' if leccion.imagen_portada else 'Haz clic o arrastra una imagen aquí' }}</span>

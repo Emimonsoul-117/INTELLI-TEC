@@ -189,6 +189,99 @@
     .sidebar-master::-webkit-scrollbar { width: 6px; }
     .sidebar-master::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
     .sidebar-master::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+    /* MODAL OVERLAY PARA IMAGEN DE LECCIÓN (PANTALLA COMPLETA) */
+    .modal-imagen-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        animation: fadeInImgModal 0.2s ease-out;
+    }
+    @keyframes fadeInImgModal {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .modal-imagen-contenedor {
+        position: relative;
+        max-width: 95vw;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-imagen-zoom {
+        max-width: 92vw;
+        max-height: 84vh;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+        background: #0f172a;
+    }
+    .btn-cerrar-modal-img {
+        position: absolute;
+        top: -16px;
+        right: -16px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #0f172a;
+        border: 2px solid #e2e8f0;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+        transition: all 0.15s ease;
+        z-index: 1000000;
+    }
+    .btn-cerrar-modal-img:hover {
+        background: #fee2e2;
+        color: #dc2626;
+        transform: scale(1.1);
+    }
+    .btn-abrir-original {
+        position: absolute;
+        top: -16px;
+        left: -16px;
+        background: #ffffff;
+        color: #0f172a;
+        padding: 7px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-decoration: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        z-index: 1000000;
+        display: flex;
+        align-items: center;
+        transition: all 0.15s ease;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-abrir-original:hover {
+        background: #f8fafc;
+        color: #2563eb;
+        transform: translateY(-1px);
+    }
+    .modal-imagen-pie {
+        margin-top: 12px;
+        color: #cbd5e1;
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-align: center;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+    }
 </style>
 
 {% set curso_obj = leccion.curso %}
@@ -259,11 +352,6 @@
         <div class="document-canvas">
             <!-- Cabecera de la Lección Específica -->
             <div class="leccion-header-interior">
-                {% if leccion.imagen_portada %}
-                <div class="mb-4 rounded-3 overflow-hidden shadow-sm" style="max-height: 280px; border-radius: 14px;">
-                    <img src="{{ leccion.imagen_portada }}" alt="Portada {{ leccion.titulo }}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;">
-                </div>
-                {% endif %}
                 <div class="d-flex align-items-center mb-3">
                     <div class="bg-primary text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px; border-radius: 12px; background: #0B2545 !important;">
                         <span class="fs-4 fw-bolder">{{ leccion.orden }}</span>
@@ -415,6 +503,55 @@
                 {% endif %}
 
             {% endfor %}
+
+            <!-- MATERIAL GRÁFICO / IMAGEN DE LA LECCIÓN (SECCIÓN INFERIOR) -->
+            {% if leccion.imagen_portada %}
+            <div class="seccion-card mb-4 mt-3" style="border: 2px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-4 py-3" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-2" style="width:32px; height:32px; background:#eff6ff; color:#2563eb;">
+                            <i class="bi bi-image fs-6"></i>
+                        </span>
+                        <span class="fw-bold text-dark" style="font-size: 0.95rem;">Material Gráfico / Imagen de Apoyo</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark fw-bold d-inline-flex align-items-center gap-1 shadow-sm" onclick="abrirModalImagen()" style="border-radius: 8px; font-size: 0.82rem;">
+                        <i class="bi bi-arrows-fullscreen"></i> Ver en pantalla completa
+                    </button>
+                </div>
+                
+                <div class="p-3 text-center" style="background: #f8fafc;">
+                    <div class="d-inline-block position-relative rounded-3 overflow-hidden shadow-sm" 
+                         style="background: #ffffff; border: 1px solid #e2e8f0; cursor: pointer; max-width: 100%; transition: transform 0.2s, box-shadow 0.2s;"
+                         onclick="abrirModalImagen()"
+                         onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)';"
+                         onmouseout="this.style.transform='none'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.05)';"
+                         title="Haz clic para ver la imagen en tamaño completo">
+                        <img src="{{ leccion.imagen_portada }}" 
+                             alt="Material de {{ leccion.titulo }}" 
+                             style="max-height: 480px; max-width: 100%; width: auto; height: auto; object-fit: contain; display: block; margin: 0 auto; padding: 8px;">
+                        <div class="py-2 px-3 text-center border-top bg-light" style="font-size: 0.82rem; color: #64748b; font-weight: 600;">
+                            <i class="bi bi-zoom-in me-1 text-primary"></i> Haz clic para ampliar y ver sin recortes
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL FLOTANTE PARA VER IMAGEN EN PANTALLA COMPLETA -->
+            <div id="modalImagenLeccion" class="modal-imagen-overlay" style="display: none;" onclick="cerrarModalImagen(event)">
+                <div class="modal-imagen-contenedor" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-cerrar-modal-img" onclick="cerrarModalImagen()" title="Cerrar (Esc)">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                    <a href="{{ leccion.imagen_portada }}" target="_blank" rel="noopener noreferrer" class="btn-abrir-original" title="Abrir en pestaña nueva">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Abrir original
+                    </a>
+                    <img id="imgModalLeccion" src="{{ leccion.imagen_portada }}" alt="Material de {{ leccion.titulo }}" class="modal-imagen-zoom">
+                    <div class="modal-imagen-pie">
+                        <span><i class="bi bi-card-image me-1"></i> {{ leccion.titulo }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Navegación Continua y Acciones Base -->
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-5 pt-5 border-top" style="border-color: #cbd5e1 !important;">
@@ -723,6 +860,32 @@
             }
         }
     }
+
+    // Modal de imagen de lección en pantalla completa
+    function abrirModalImagen() {
+        const modal = document.getElementById('modalImagenLeccion');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function cerrarModalImagen(event) {
+        if (event && event.target && event.target.closest('.modal-imagen-contenedor') && !event.target.closest('.btn-cerrar-modal-img')) {
+            return;
+        }
+        const modal = document.getElementById('modalImagenLeccion');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cerrarModalImagen();
+        }
+    });
 </script>
 
 {% include "componentes/chatbot.html" %}
