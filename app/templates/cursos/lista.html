@@ -442,6 +442,12 @@
                 {% endif %}
             </div>
 
+            {% if curso.imagen_portada %}
+            <div style="height: 125px; overflow: hidden; width: 100%; background: #f1f5f9;">
+                <img src="{{ curso.imagen_portada }}" alt="{{ curso.titulo }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </div>
+            {% endif %}
+
             <!-- Cuerpo -->
             <div class="curso-card-body">
                 <div class="curso-titulo">{{ curso.titulo }}</div>
@@ -462,6 +468,9 @@
 
                 <div class="curso-meta">
                     <span><i class="bi bi-journal-text"></i>{{ curso.lecciones|length }} lecc.</span>
+                    {% if curso.usuario_docente %}
+                    <span title="Docente: {{ curso.usuario_docente.nombre }}"><i class="bi bi-person-badge"></i>{{ curso.usuario_docente.nombre.split()[0] }}</span>
+                    {% endif %}
                     <span><i class="bi bi-people-fill"></i>{{ curso.inscripciones|length }} alumnos</span>
                 </div>
             </div>

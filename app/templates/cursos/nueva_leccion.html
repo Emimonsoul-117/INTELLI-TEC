@@ -170,7 +170,7 @@
     </div>
 
     <!-- PANTALLA DIVIDIDA: SIDEBAR STICKY Y LIENZO INFINITO -->
-    <form method="POST" id="formLeccion">
+    <form method="POST" id="formLeccion" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="secciones_json" id="secciones_json">
         
@@ -207,8 +207,11 @@
                         <h6 class="fw-bolder mb-3 text-white" style="font-size: 0.95rem;">
                             <i class="bi bi-stars text-warning me-2"></i> Generación Completa
                         </h6>
-                        <button type="button" class="btn btn-warning w-100 fw-bold py-2 mb-3 shadow-sm" style="border-radius: 10px; font-size: 0.85rem;" onclick="generarLeccionCompletaIA()">
+                        <button type="button" class="btn btn-warning w-100 fw-bold py-2 mb-2 shadow-sm" style="border-radius: 10px; font-size: 0.85rem;" data-bs-toggle="modal" data-bs-target="#modalIA">
                             <i class="bi bi-magic me-1"></i> Forjar Lección con IA
+                        </button>
+                        <button type="button" class="btn w-100 fw-bold py-2 mb-3 shadow-sm" style="background:#0891b2; color:#fff; border-radius: 10px; font-size: 0.85rem; border:none;" data-bs-toggle="modal" data-bs-target="#modalAleatorios">
+                            <i class="bi bi-shuffle me-1"></i> 🎲 Ejercicios Aleatorios
                         </button>
 
                         <hr style="border-color: rgba(255,255,255,0.15); margin: 1.5rem 0;">
@@ -242,6 +245,29 @@
                     </div>
                 </div>
 
+                <!-- IMAGEN DE PORTADA DE LA LECCIÓN -->
+                <div class="form-card p-4 mb-4 shadow-sm" style="border-radius: 16px;">
+                    <label class="form-label text-secondary fw-bold text-uppercase mb-2" style="font-size: 0.75rem;">
+                        <i class="bi bi-image me-1"></i> Imagen de Portada de la Lección
+                        <span class="fw-normal text-muted" style="font-size:0.75rem;">(opcional · JPG/PNG/WEBP · máx. 5 MB)</span>
+                    </label>
+                    <div id="portada-drop-area" class="position-relative rounded-3 overflow-hidden"
+                        style="border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer; min-height: 110px; transition: 0.2s;"
+                        onclick="document.getElementById('imagen_portada').click()"
+                        ondragover="event.preventDefault(); this.style.borderColor='#10B981';"
+                        ondragleave="this.style.borderColor='#cbd5e1';"
+                        ondrop="manejarDropPortada(event)">
+                        <img id="portada-preview" src="" alt="" class="d-none"
+                            style="object-fit: cover; position: absolute; top:0; left:0; width:100%; height:100%;">
+                        <div id="portada-placeholder" class="d-flex align-items-center justify-content-center gap-2 h-100 py-3">
+                            <i class="bi bi-cloud-arrow-up fs-2 text-success"></i>
+                            <span class="fw-bold text-secondary" style="font-size:0.9rem;">Haz clic o arrastra una imagen aquí</span>
+                        </div>
+                    </div>
+                    <input type="file" id="imagen_portada" name="imagen_portada" accept="image/*" class="d-none" onchange="previsualizarPortadaLeccion(this)">
+                    <div id="portada-nombre" class="mt-1 text-muted" style="font-size:0.8rem;"></div>
+                </div>
+
                 <!-- ALERTA GLOBAL IA -->
                 <div id="loadingGlobalIA" class="alert alert-info py-3 mb-4 rounded-3 shadow-sm" style="display:none; background: #e0f2fe; color:#0369a1; border: 1px solid #bae6fd;">
                     <div class="d-flex align-items-center">
@@ -264,6 +290,68 @@
 
         </div>
     </form>
+</div>
+
+<!-- ===== MODAL: Forjar Lección con IA ===== -->
+<div class="modal fade" id="modalIA" tabindex="-1" aria-labelledby="modalIALabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header text-white" style="background: linear-gradient(135deg,#0B2545,#1B396A); border-bottom: none;">
+        <h5 class="modal-title fw-bolder" id="modalIALabel"><i class="bi bi-stars text-warning me-2"></i> Forjar Lección con IA</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-4">
+          <label class="form-label fw-bold text-dark">Subtema o enfoque específico</label>
+          <input type="text" class="form-control" id="iaSubtema" placeholder="Ej: fracciones complejas, operaciones con signos..." style="border-radius: 10px; border: 2px solid #e2e8f0; padding: 10px 14px;">
+          <small class="text-muted">Se combinará con el título de la lección si está vacío.</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark">Número de ejercicios a generar</label>
+          <div class="d-flex align-items-center gap-3">
+            <input type="range" class="form-range flex-grow-1" id="iaNumEjerciciosRange" min="1" max="10" value="3" oninput="document.getElementById('iaNumEjerciciosVal').textContent = this.value">
+            <span class="badge fs-6 fw-bold" id="iaNumEjerciciosVal" style="background:#1B396A; color:#fff; min-width: 36px; text-align:center; border-radius: 8px; padding: 6px 10px;">3</span>
+          </div>
+          <small class="text-muted">La IA generará exactamente esa cantidad de ejercicios variados.</small>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 px-4 pb-4">
+        <button type="button" class="btn fw-bold px-4" data-bs-dismiss="modal" style="border-radius: 10px; border: 2px solid #e2e8f0;">Cancelar</button>
+        <button type="button" class="btn btn-warning fw-bolder px-5" style="border-radius: 10px;" onclick="ejecutarGenerarLeccionIA()">
+          <i class="bi bi-magic me-1"></i> Generar Lección
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Ejercicios Aleatorios ===== -->
+<div class="modal fade" id="modalAleatorios" tabindex="-1" aria-labelledby="modalAleatoriosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+      <div class="modal-header text-white" style="background: linear-gradient(135deg,#0891b2,#06b6d4); border-bottom: none;">
+        <h5 class="modal-title fw-bolder" id="modalAleatoriosLabel"><i class="bi bi-shuffle me-2"></i> Ejercicios Aleatorios de la Plataforma</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-secondary fw-semibold mb-4">Importa ejercicios ya existentes en la plataforma y agrégalos al lienzo de esta lección.</p>
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark">¿Cuántos ejercicios importar?</label>
+          <div class="d-flex align-items-center gap-3">
+            <input type="range" class="form-range flex-grow-1" id="aleatoriosCantRange" min="1" max="15" value="5" oninput="document.getElementById('aleatoriosCantVal').textContent = this.value">
+            <span class="badge fs-6 fw-bold" id="aleatoriosCantVal" style="background:#0891b2; color:#fff; min-width: 36px; text-align:center; border-radius: 8px; padding: 6px 10px;">5</span>
+          </div>
+        </div>
+        <div id="alertAleatorios" class="alert alert-info d-none" style="border-radius: 10px; font-size: 0.9rem;"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0 px-4 pb-4">
+        <button type="button" class="btn fw-bold px-4" data-bs-dismiss="modal" style="border-radius: 10px; border: 2px solid #e2e8f0;">Cancelar</button>
+        <button type="button" class="btn fw-bolder px-5 text-white" style="background:#0891b2; border-radius: 10px; border:none;" onclick="importarEjerciciosAleatorios()">
+          <i class="bi bi-shuffle me-1"></i> Importar Ejercicios
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Quill.js JS -->
@@ -577,17 +665,27 @@
     }
 
     async function generarLeccionCompletaIA() {
+        // Esta función ahora sólo abre el modal (llamada desde botón legacy)
+        const modalEl = document.getElementById('modalIA');
+        if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    async function ejecutarGenerarLeccionIA() {
         const tituloLeccion = document.querySelector('input[name="titulo"]').value;
-        if (!tituloLeccion) {
-            alert('Por favor, escribe el título de la lección antes de usar la IA.');
+        const subtema = (document.getElementById('iaSubtema').value || '').trim() || tituloLeccion;
+        const numEjercicios = parseInt(document.getElementById('iaNumEjerciciosRange').value) || 3;
+
+        if (!subtema) {
+            alert('Por favor, escribe el título de la lección o un subtema antes de usar la IA.');
             return;
         }
 
-        const subtema = prompt('Describe brevemente el subtema o enfoque específico (ej: "operaciones con signos", "fracciones complejas"):', tituloLeccion);
-        if (subtema === null) return;
+        // Cerrar modal
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalIA')).hide();
 
         const loading = document.getElementById('loadingGlobalIA');
         loading.style.display = 'block';
+        document.getElementById('loadingGlobalText').textContent = `Generando lección con ${numEjercicios} ejercicio(s)... esto puede tardar unos segundos.`;
 
         try {
             const response = await fetch("{{ url_for('cursos.api_generar_leccion_completa') }}", {
@@ -598,12 +696,18 @@
                 },
                 body: JSON.stringify({
                     tema: subtema,
-                    nivel: '{{ curso.nivel }}'
+                    nivel: '{{ curso.nivel }}',
+                    num_ejercicios: numEjercicios
                 })
             });
 
-            if (!response.ok) throw new Error('Error al generar lección completa');
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.error || 'Error al generar la lección');
+            }
             const data = await response.json();
+
+            if (data.error) throw new Error(data.error);
 
             // Limpiar lienzo actual
             secciones = [];
@@ -636,12 +740,66 @@
                 
                 renderSecciones();
                 document.getElementById('dropZone').style.display = 'none';
-                alert('✨ ¡Lección generada exitosamente! Revisa el contenido y guárdalo.');
+                // Notificación con estilo en vez de alert nativo
+                loading.innerHTML = '<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-4 me-2"></i> <span class="fw-bolder text-success">✅ ¡Lección generada exitosamente con ' + data.secciones.filter(s => s.tipo === 'ejercicio').length + ' ejercicio(s)! Revisa el contenido y guárdalo.</span></div>';
+                setTimeout(() => { loading.style.display = 'none'; }, 5000);
             }
         } catch (error) {
-            alert('Error al generar lección completa: ' + error.message);
-        } finally {
-            loading.style.display = 'none';
+            loading.innerHTML = '<div class="d-flex align-items-center"><i class="bi bi-exclamation-triangle-fill text-danger fs-4 me-2"></i> <span class="fw-bolder text-danger">Error: ' + error.message + '</span></div>';
+            setTimeout(() => { loading.style.display = 'none'; }, 5000);
+        }
+    }
+
+    async function importarEjerciciosAleatorios() {
+        const cantidad = parseInt(document.getElementById('aleatoriosCantRange').value) || 5;
+        const alertEl = document.getElementById('alertAleatorios');
+        const idCurso = {{ curso.id }};
+
+        alertEl.className = 'alert alert-info';
+        alertEl.textContent = 'Buscando ejercicios...';
+
+        try {
+            const response = await fetch(`{{ url_for('cursos.api_ejercicios_aleatorios') }}?cantidad=${cantidad}&excluir_curso=${idCurso}`, {
+                headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+            });
+            const data = await response.json();
+
+            if (!data.ejercicios || data.ejercicios.length === 0) {
+                alertEl.className = 'alert alert-warning';
+                alertEl.textContent = 'No se encontraron ejercicios disponibles en la plataforma.';
+                return;
+            }
+
+            // Cerrar modal e importar
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAleatorios')).hide();
+
+            data.ejercicios.forEach(ej => {
+                const id = 'sec_' + (++idCounter);
+                const newSec = {
+                    id: id,
+                    tipo: 'ejercicio',
+                    _pregunta: ej.enunciado,
+                    _tipo_q: ej.tipo,
+                    _respuesta: ej.respuesta_correcta,
+                    _op_a: (ej.opciones && ej.opciones.a) || '',
+                    _op_b: (ej.opciones && ej.opciones.b) || '',
+                    _op_c: (ej.opciones && ej.opciones.c) || '',
+                    _op_d: (ej.opciones && ej.opciones.d) || '',
+                };
+                secciones.push(newSec);
+            });
+
+            renderSecciones();
+            document.getElementById('dropZone').style.display = 'none';
+
+            const loading = document.getElementById('loadingGlobalIA');
+            loading.style.display = 'block';
+            loading.innerHTML = '<div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success fs-4 me-2"></i> <span class="fw-bolder text-success">✅ Se importaron ' + data.ejercicios.length + ' ejercicio(s) aleatorio(s) desde la plataforma.</span></div>';
+            setTimeout(() => { loading.style.display = 'none'; loading.innerHTML = ''; }, 4000);
+
+        } catch (error) {
+            alertEl.className = 'alert alert-danger';
+            alertEl.textContent = 'Error al obtener ejercicios: ' + error.message;
         }
     }
 
@@ -688,5 +846,38 @@
         } catch (error) { alert('Error: ' + error.message); loading.style.display = 'none'; }
     }
     document.getElementById('formLeccion').addEventListener('submit', function () { prepararEnvio(); });
+
+    function previsualizarPortadaLeccion(input) {
+        const preview = document.getElementById('portada-preview');
+        const placeholder = document.getElementById('portada-placeholder');
+        const nombreEl = document.getElementById('portada-nombre');
+        const dropArea = document.getElementById('portada-drop-area');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+                dropArea.style.minHeight = '160px';
+                dropArea.style.borderColor = '#10B981';
+                dropArea.style.borderStyle = 'solid';
+            };
+            reader.readAsDataURL(input.files[0]);
+            nombreEl.textContent = '📎 ' + input.files[0].name;
+        }
+    }
+
+    function manejarDropPortada(event) {
+        event.preventDefault();
+        const input = document.getElementById('imagen_portada');
+        const dt = event.dataTransfer;
+        if (dt.files && dt.files[0]) {
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(dt.files[0]);
+            input.files = dataTransfer.files;
+            previsualizarPortadaLeccion(input);
+        }
+        event.currentTarget.style.borderColor = '#10B981';
+    }
 </script>
 {% endblock %}

@@ -167,8 +167,9 @@ class ServicioIA:
             print(f'Error generando teoría: {exc}')
             return {'error': 'Error al generar la teoría. Inténtalo de nuevo.'}
 
-    def generar_leccion_completa(self, tema, nivel):
+    def generar_leccion_completa(self, tema, nivel, num_ejercicios=3):
         """Genera una lección con teoría y ejercicios variados."""
+        num_ejercicios = max(1, min(10, int(num_ejercicios)))
         prompt = f"""
         Actúa como un profesor de matemáticas experto. Genera una lección completa sobre "{tema}"
         para nivel {nivel}.
@@ -192,7 +193,8 @@ class ServicioIA:
 
         Requisitos:
         - Todo en español.
-        - Incluye 1 sección de teoría y entre 2 y 4 ejercicios de tipos variados.
+        - Incluye EXACTAMENTE 1 sección de teoría y EXACTAMENTE {num_ejercicios} ejercicio(s) de tipos variados.
+        - Varía los tipos entre: opcion_multiple, verdadero_falso, numerico, completar_texto, ordenar_pasos, respuesta_corta.
         - Para completar_texto usa corchetes [respuesta] en la pregunta.
         - Para ordenar_pasos incluye opciones a,b,c,d en orden correcto y respuesta "a,b,c,d".
         - Para respuesta_corta, respuesta puede tener alternativas separadas por ;.

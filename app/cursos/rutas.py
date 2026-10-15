@@ -22,6 +22,7 @@ from ..modelos import (
 )
 from ..decoradores import docente_required, curso_owner_required
 from ..servicios.auditoria_servicio import registrar_accion
+from ..servicios.cloudinary_servicio import subir_imagen_portada, eliminar_imagen
 
 
 def _generar_codigo_curso_unico():
@@ -223,6 +224,16 @@ def crear_curso():
 
         asegurar_fila_docente_si_falta(current_user)
 
+        # Manejar imagen de portada
+        imagen_url = None
+        archivo_portada = request.files.get('imagen_portada')
+        if archivo_portada and archivo_portada.filename:
+            try:
+                imagen_url = subir_imagen_portada(archivo_portada, carpeta='portadas/cursos')
+            except ValueError as e:
+                flash(str(e), 'peligro')
+                return redirect(url_for('cursos.crear_curso'))
+
         nuevo_curso = Curso(
             titulo=titulo,
             descripcion=descripcion,
@@ -231,6 +242,7 @@ def crear_curso():
             codigo_curso=_generar_codigo_curso_unico(),
             estado='borrador',
             visibilidad=visibilidad,
+            imagen_portada=imagen_url,
         )
         bd.session.add(nuevo_curso)
         bd.session.commit()
@@ -271,11 +283,20 @@ def ver_curso(id):
             if abs(inscripcion.progreso - real) > 0.02:
                 inscripcion.progreso = real
                 bd.session.commit()
+
+    # Obtener nombre del docente para mostrarlo en la vista
+    docente_nombre = None
+    if curso.id_docente:
+        docente_usuario = Usuario.query.get(curso.id_docente)
+        if docente_usuario:
+            docente_nombre = docente_usuario.nombre
+
     return render_template(
         'cursos/ver.html',
         curso=curso,
         lecciones_completadas_ids=lecciones_completadas_ids,
         inscripcion=inscripcion,
+        docente_nombre=docente_nombre,
     )
 
 
@@ -293,11 +314,65 @@ def vista_alumno(id):
         _asegurar_codigo_curso(curso)
         bd.session.commit()
 
+    docente_nombre = current_user.nombre if curso.id_docente == current_user.id else (
+        Usuario.query.get(curso.id_docente).nombre if curso.id_docente else None
+    )
+
     return render_template(
         'cursos/ver.html',
         curso=curso,
         lecciones_completadas_ids=set(),
         inscripcion=None,
+        docente_nombre=docente_nombre,
+        modo_preview=True,
+    )
+
+
+@cursos.route('/<int:id_curso>/vista-alumno/leccion/<int:id_leccion>')
+@login_required
+@docente_required
+def vista_alumno_leccion(id_curso, id_leccion):
+    """Vista previa de una lección como la vería un alumno (sin bloqueo de inscripción/secuencia)."""
+    curso = Curso.query.get_or_404(id_curso)
+    if curso.id_docente != current_user.id and current_user.rol != 'administrador':
+        flash('No tienes permiso para ver este curso.', 'peligro')
+        return redirect(url_for('cursos.lista_cursos'))
+
+    leccion = Leccion.query.get_or_404(id_leccion)
+    if leccion.id_curso != id_curso:
+        flash('La lección no pertenece a este curso.', 'peligro')
+        return redirect(url_for('cursos.vista_alumno', id=id_curso))
+
+    # Construir secciones igual que en ver_leccion normal
+    secciones = leccion.secciones
+    if not secciones:
+        secciones = []
+        if leccion.contenido_teoria:
+            secciones.append({'tipo': 'teoria', 'contenido': leccion.contenido_teoria, 'orden': 1})
+        for v in leccion.videos:
+            secciones.append({
+                'tipo': 'video',
+                'url': v.url_youtube,
+                'titulo': v.titulo or 'Video de la Lección',
+                'orden': len(secciones) + 1
+            })
+        for e in leccion.ejercicios:
+            secciones.append({
+                'tipo': 'ejercicio',
+                'pregunta': e.enunciado,
+                'tipo_q': e.tipo,
+                'opciones': e.opciones or {},
+                'respuesta': e.respuesta_correcta,
+                'dificultad': e.dificultad,
+                'id_ejercicio': e.id,
+                'orden': len(secciones) + 1
+            })
+
+    return render_template(
+        'cursos/ver_leccion.html',
+        leccion=leccion,
+        secciones=secciones,
+        completada=False,
         modo_preview=True,
     )
 
@@ -632,6 +707,25 @@ def editar_curso(id):
         visibilidad = request.form.get('visibilidad', curso.visibilidad)
         if visibilidad in ('global', 'privado'):
             curso.visibilidad = visibilidad
+
+        # Manejar imagen de portada
+        archivo_portada = request.files.get('imagen_portada')
+        if archivo_portada and archivo_portada.filename:
+            try:
+                # Eliminar imagen anterior si existe
+                if curso.imagen_portada:
+                    eliminar_imagen(curso.imagen_portada)
+                curso.imagen_portada = subir_imagen_portada(archivo_portada, carpeta='portadas/cursos')
+            except ValueError as e:
+                flash(str(e), 'peligro')
+                return redirect(url_for('cursos.editar_curso', id=id))
+
+        # Opción para quitar la portada actual
+        if request.form.get('quitar_portada') == '1':
+            if curso.imagen_portada:
+                eliminar_imagen(curso.imagen_portada)
+            curso.imagen_portada = None
+
         bd.session.commit()
         flash('Curso actualizado correctamente.', 'exito')
         return redirect(url_for('cursos.ver_curso', id=curso.id))
@@ -665,6 +759,16 @@ def nueva_leccion(id_curso):
         for i, sec in enumerate(secciones):
             sec['orden'] = i + 1
 
+        # Manejar imagen de portada de la lección
+        imagen_url = None
+        archivo_portada = request.files.get('imagen_portada')
+        if archivo_portada and archivo_portada.filename:
+            try:
+                imagen_url = subir_imagen_portada(archivo_portada, carpeta='portadas/lecciones')
+            except ValueError as e:
+                flash(str(e), 'peligro')
+                return redirect(url_for('cursos.nueva_leccion', id_curso=id_curso))
+
         leccion = Leccion(
             titulo=titulo,
             orden=int(orden) if orden else (len(curso.lecciones) + 1),
@@ -674,7 +778,8 @@ def nueva_leccion(id_curso):
             contenido_teoria=next(
                 (s.get('contenido', '') for s in secciones if s.get('tipo') == 'teoria'),
                 None
-            )
+            ),
+            imagen_portada=imagen_url,
         )
         bd.session.add(leccion)
         bd.session.commit()
@@ -1145,17 +1250,59 @@ def api_generar_leccion_completa():
     data = request.json or {}
     tema = data.get('tema')
     nivel = data.get('nivel')
+    num_ejercicios = data.get('num_ejercicios', 3)
 
     if not tema or not nivel:
         return jsonify({'error': 'Faltan parámetros'}), 400
 
+    try:
+        num_ejercicios = max(1, min(10, int(num_ejercicios)))
+    except (ValueError, TypeError):
+        num_ejercicios = 3
+
     from ..servicios.ia_servicio import ServicioIA
     servicio = ServicioIA()
-    resultado = servicio.generar_leccion_completa(tema, nivel)
+    resultado = servicio.generar_leccion_completa(tema, nivel, num_ejercicios)
 
     if isinstance(resultado, dict) and 'error' in resultado:
         return jsonify(resultado), 500
     return jsonify(resultado)
+
+
+@cursos.route('/api/ejercicios-aleatorios', methods=['GET'])
+@login_required
+@docente_required
+def api_ejercicios_aleatorios():
+    """Devuelve N ejercicios aleatorios de la BD para importar en el editor de lecciones."""
+    import random
+    cantidad = request.args.get('cantidad', 5, type=int)
+    cantidad = max(1, min(20, cantidad))
+    excluir_curso = request.args.get('excluir_curso', type=int)
+
+    query = Ejercicio.query.join(Leccion)
+    if excluir_curso:
+        query = query.filter(Leccion.id_curso != excluir_curso)
+
+    total = query.count()
+    if total == 0:
+        return jsonify({'ejercicios': [], 'total': 0})
+
+    # Muestra aleatoria eficiente
+    ejercicios_todos = query.all()
+    seleccionados = random.sample(ejercicios_todos, min(cantidad, len(ejercicios_todos)))
+
+    resultado = []
+    for ej in seleccionados:
+        resultado.append({
+            'enunciado': ej.enunciado,
+            'tipo': ej.tipo,
+            'opciones': ej.opciones or {},
+            'respuesta_correcta': ej.respuesta_correcta,
+            'dificultad': ej.dificultad or 1,
+            'id_leccion': ej.id_leccion,
+        })
+
+    return jsonify({'ejercicios': resultado, 'total': total})
 
 
 @cursos.route('/api/explicar-ejercicio', methods=['POST'])
@@ -1490,6 +1637,23 @@ def editar_leccion(id_curso, id_leccion):
             None
         )
 
+        # Manejar imagen de portada de la lección
+        archivo_portada = request.files.get('imagen_portada')
+        if archivo_portada and archivo_portada.filename:
+            try:
+                if leccion.imagen_portada:
+                    eliminar_imagen(leccion.imagen_portada)
+                leccion.imagen_portada = subir_imagen_portada(archivo_portada, carpeta='portadas/lecciones')
+            except ValueError as e:
+                flash(str(e), 'peligro')
+                return redirect(url_for('cursos.editar_leccion', id_curso=id_curso, id_leccion=id_leccion))
+
+        # Opción para quitar la portada actual
+        if request.form.get('quitar_portada') == '1':
+            if leccion.imagen_portada:
+                eliminar_imagen(leccion.imagen_portada)
+            leccion.imagen_portada = None
+
         # Eliminar ejercicios anteriores y recrear desde secciones
         Ejercicio.query.filter_by(id_leccion=leccion.id).delete()
         for sec in secciones or []:
@@ -1510,6 +1674,7 @@ def editar_leccion(id_curso, id_leccion):
         bd.session.commit()
         flash('Lección actualizada correctamente.', 'exito')
         return redirect(url_for('cursos.ver_curso', id=id_curso))
+
 
     # Preparar secciones para el editor
     secciones_editor = leccion.secciones
@@ -1597,6 +1762,13 @@ def eliminar_curso(id, _curso):
     titulo = curso.titulo
     registrar_accion('ELIMINAR_CURSO', {'id_curso': id, 'titulo': titulo})
 
+    # Eliminar imagen de portada del curso y de sus lecciones en Cloudinary
+    if curso.imagen_portada:
+        eliminar_imagen(curso.imagen_portada)
+    for l_item in curso.lecciones:
+        if l_item.imagen_portada:
+            eliminar_imagen(l_item.imagen_portada)
+
     # Limpiar datos asociados (se eliminan en cascada gracias a cascade='all, delete-orphan')
     # Pero los intentos de ejercicios necesitan limpiarse manualmente
     for leccion in curso.lecciones:
@@ -1624,6 +1796,10 @@ def eliminar_leccion(id_curso, id_leccion, _curso):
 
     titulo_leccion = leccion.titulo
     
+    # Eliminar imagen de portada de la lección en Cloudinary si tiene
+    if leccion.imagen_portada:
+        eliminar_imagen(leccion.imagen_portada)
+
     # Limpiar datos asociados a ejercicios e intentos (cascada manual necesaria para intentos)
     for ejercicio in leccion.ejercicios:
         IntentoEjercicio.query.filter_by(id_ejercicio=ejercicio.id).delete()

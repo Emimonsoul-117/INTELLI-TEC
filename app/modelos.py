@@ -89,6 +89,7 @@ class Curso(bd.Model):
     fecha_creacion = bd.Column(bd.DateTime, default=datetime.utcnow)
     estado = bd.Column(bd.Enum('borrador', 'publicado'), default='borrador', nullable=False)
     visibilidad = bd.Column(bd.Enum('global', 'privado'), default='privado', nullable=False)
+    imagen_portada = bd.Column(bd.String(500), nullable=True)  # URL de Cloudinary
     
     # Relaciones
     lecciones = bd.relationship('Leccion', backref='curso', lazy=True, cascade='all, delete-orphan')
@@ -112,6 +113,7 @@ class Leccion(bd.Model):
     contenido_teoria = bd.Column(bd.Text)  # Legacy: plain text/HTML
     secciones = bd.Column(bd.JSON, nullable=True)  # New: list of section blocks
     # secciones format: [{"tipo": "teoria"|"video"|"ejercicio", ...}, ...]
+    imagen_portada = bd.Column(bd.String(500), nullable=True)  # URL de Cloudinary
 
     ejercicios = bd.relationship('Ejercicio', backref='leccion', lazy=True, cascade='all, delete-orphan')
     videos = bd.relationship('Video', backref='leccion', lazy=True, cascade='all, delete-orphan')

@@ -70,9 +70,45 @@
                     </div>
                 </div>
 
-                <form method="POST" class="needs-validation" novalidate>
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     
+                    <!-- IMAGEN DE PORTADA DEL CURSO -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark" style="font-size: 0.95rem;">
+                            <i class="bi bi-image me-1 text-success"></i> Imagen de Portada
+                            <span class="text-muted fw-normal" style="font-size:0.82rem;">(opcional · JPG/PNG/WEBP · máx. 5 MB)</span>
+                        </label>
+                        {% if curso.imagen_portada %}
+                        <div class="mb-2 position-relative" style="max-width:320px;">
+                            <img src="{{ curso.imagen_portada }}" alt="Portada actual" class="img-fluid rounded-3 shadow-sm" style="max-height:160px; object-fit:cover; width:100%;">
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="text-muted" style="font-size:0.8rem;"><i class="bi bi-check-circle-fill text-success me-1"></i>Portada actual</span>
+                                <label class="form-check-label text-danger" style="font-size:0.8rem; cursor:pointer;">
+                                    <input type="checkbox" name="quitar_portada" value="1" class="form-check-input me-1">
+                                    Quitar portada
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div id="portada-drop-area" class="position-relative rounded-3 overflow-hidden"
+                            style="border: 2px dashed #cbd5e1; background: #f8fafc; cursor: pointer; min-height: 120px; transition: 0.2s;"
+                            onclick="document.getElementById('imagen_portada').click()"
+                            ondragover="event.preventDefault(); this.style.borderColor='#16A34A';"
+                            ondragleave="this.style.borderColor='#cbd5e1';"
+                            ondrop="manejarDrop(event)">
+                            <img id="portada-preview" src="" alt="" class="w-100 h-100 d-none"
+                                style="object-fit: cover; position: absolute; top:0; left:0; width:100%; height:100%;">
+                            <div id="portada-placeholder" class="d-flex flex-column align-items-center justify-content-center h-100 py-3">
+                                <i class="bi bi-cloud-arrow-up fs-2 text-success mb-1"></i>
+                                <p class="mb-0 fw-bold text-secondary" style="font-size:0.88rem;">{{ 'Cambiar imagen' if curso.imagen_portada else 'Subir imagen' }}</p>
+                            </div>
+                        </div>
+                        <input type="file" id="imagen_portada" name="imagen_portada" accept="image/*" class="d-none"
+                            onchange="previsualizarPortada(this)">
+                        <div id="portada-nombre" class="mt-1 text-muted" style="font-size:0.82rem;"></div>
+                    </div>
+
                     <!-- TITULO DEL CURSO -->
                     <div class="mb-4">
                         <label for="titulo" class="form-label fw-bold text-dark" style="font-size: 0.95rem;">Título del Programa <span class="text-danger">*</span></label>
@@ -158,4 +194,39 @@
         </div>
     </div>
 </div>
+
+<script>
+function previsualizarPortada(input) {
+    const preview = document.getElementById('portada-preview');
+    const placeholder = document.getElementById('portada-placeholder');
+    const nombreEl = document.getElementById('portada-nombre');
+    const dropArea = document.getElementById('portada-drop-area');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            dropArea.style.minHeight = '180px';
+            dropArea.style.borderColor = '#16A34A';
+            dropArea.style.borderStyle = 'solid';
+        };
+        reader.readAsDataURL(input.files[0]);
+        nombreEl.textContent = '📎 ' + input.files[0].name;
+    }
+}
+
+function manejarDrop(event) {
+    event.preventDefault();
+    const input = document.getElementById('imagen_portada');
+    const dt = event.dataTransfer;
+    if (dt.files && dt.files[0]) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(dt.files[0]);
+        input.files = dataTransfer.files;
+        previsualizarPortada(input);
+    }
+    event.currentTarget.style.borderColor = '#16A34A';
+}
+</script>
 {% endblock %}

@@ -149,6 +149,46 @@ def _ensure_visibilidad_cursos_column(app):
             app.logger.warning("No se pudo asegurar la columna cursos.visibilidad: %s", exc)
 
 
+def _ensure_imagen_portada_columns(app):
+    """Asegura que las tablas cursos y lecciones tengan la columna imagen_portada."""
+    with app.app_context():
+        try:
+            with bd.engine.begin() as conn:
+                # Comprobar cursos.imagen_portada
+                n_curso = conn.execute(
+                    text(
+                        """
+                        SELECT COUNT(*) FROM information_schema.COLUMNS
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'cursos'
+                          AND COLUMN_NAME = 'imagen_portada'
+                        """
+                    )
+                ).scalar()
+                if n_curso == 0:
+                    conn.execute(
+                        text("ALTER TABLE cursos ADD COLUMN imagen_portada VARCHAR(500) NULL")
+                    )
+
+                # Comprobar lecciones.imagen_portada
+                n_lecc = conn.execute(
+                    text(
+                        """
+                        SELECT COUNT(*) FROM information_schema.COLUMNS
+                        WHERE TABLE_SCHEMA = DATABASE()
+                          AND TABLE_NAME = 'lecciones'
+                          AND COLUMN_NAME = 'imagen_portada'
+                        """
+                    )
+                ).scalar()
+                if n_lecc == 0:
+                    conn.execute(
+                        text("ALTER TABLE lecciones ADD COLUMN imagen_portada VARCHAR(500) NULL")
+                    )
+        except Exception as exc:
+            app.logger.warning("No se pudo asegurar la columna imagen_portada en cursos/lecciones: %s", exc)
+
+
 def crear_app(nombre_config='por_defecto'):
     app = Flask(__name__)
     app.config.from_object(configuracion[nombre_config])
@@ -164,6 +204,7 @@ def crear_app(nombre_config='por_defecto'):
     _ensure_estado_cursos_column(app)
     _ensure_visibilidad_cursos_column(app)
     _ensure_ejercicio_tipo_enum(app)
+    _ensure_imagen_portada_columns(app)
 
     # Crea tablas nuevas faltantes (no altera tablas existentes).
     # Esto permite que nuevas entidades (p. ej. intentos_ejercicios) aparezcan

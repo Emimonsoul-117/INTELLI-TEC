@@ -69,6 +69,7 @@ CREATE TABLE `cursos` (
   `fecha_creacion` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `estado` ENUM('borrador', 'publicado') DEFAULT 'borrador' NOT NULL,
   `visibilidad` ENUM('global', 'privado') DEFAULT 'privado' NOT NULL,
+  `imagen_portada` VARCHAR(500) NULL,
   CONSTRAINT `fk_curso_docente` FOREIGN KEY (`id_docente`) REFERENCES `docentes` (`id_usuario`) ON DELETE SET NULL,
   INDEX `idx_codigo` (`codigo_curso`),
   INDEX `idx_cursos_docente` (`id_docente`)
@@ -83,6 +84,7 @@ CREATE TABLE `lecciones` (
   `orden` INT NOT NULL,
   `contenido_teoria` TEXT NULL,
   `secciones` JSON NULL,
+  `imagen_portada` VARCHAR(500) NULL,
   CONSTRAINT `fk_leccion_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`) ON DELETE CASCADE,
   INDEX `idx_lecciones_curso_orden` (`id_curso`, `orden`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

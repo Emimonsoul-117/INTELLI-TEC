@@ -16,6 +16,12 @@ class Configuracion:
     MICROSOFT_REDIRECT_URI = os.environ.get('MICROSOFT_REDIRECT_URI', 'http://localhost:5000/auth/callback')
     MICROSOFT_SCOPE = ["User.Read"]
 
+    # Cloudinary – Almacenamiento de imágenes en la nube
+    CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+    CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME') or 'kic6z6at'
+    CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY') or '852928788293492'
+    CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
+
 class ConfiguracionDesarrollo(Configuracion):
     """Configuración para el entorno de desarrollo."""
     DEBUG = True

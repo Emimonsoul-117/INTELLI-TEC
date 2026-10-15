@@ -193,6 +193,7 @@
 
 {% set curso_obj = leccion.curso %}
 {% set nivel_color = '#10B981' if curso_obj.nivel == 'basico' else '#F59E0B' if curso_obj.nivel == 'intermedio' else '#3B82F6' %}
+{% set modo_preview = modo_preview | default(False) %}
 
 <div class="master-detail-container">
     
@@ -211,7 +212,7 @@
 
         <ul class="lesson-nav-list">
             <li class="lesson-nav-item">
-                <a href="{{ url_for('cursos.ver_curso', id=curso_obj.id) }}" class="lesson-link text-white fw-bold">
+                <a href="{{ url_for('cursos.vista_alumno', id=curso_obj.id) if modo_preview else url_for('cursos.ver_curso', id=curso_obj.id) }}" class="lesson-link text-white fw-bold">
                     <div class="lesson-num-badge" style="background: transparent; border-color: transparent;"><i class="bi bi-house-door-fill text-warning fs-5"></i></div>
                     Inicio del Curso
                 </a>
@@ -229,9 +230,9 @@
                 {% set es_activa = (l_loop.id == leccion.id) %}
                 
                 <li class="lesson-nav-item">
-                    <a href="{{ url_for('cursos.ver_leccion', id=l_loop.id) }}" class="lesson-link {{ 'activa' if es_activa else '' }} {{ 'completada' if esta_completada and current_user.rol == 'estudiante' else '' }}">
+                    <a href="{{ url_for('cursos.vista_alumno_leccion', id_curso=curso_obj.id, id_leccion=l_loop.id) if modo_preview else url_for('cursos.ver_leccion', id=l_loop.id) }}" class="lesson-link {{ 'activa' if es_activa else '' }} {{ 'completada' if esta_completada and (current_user.rol == 'estudiante' or modo_preview) else '' }}">
                         <div class="lesson-num-badge">
-                            {% if esta_completada and current_user.rol == 'estudiante' %}
+                            {% if esta_completada and (current_user.rol == 'estudiante' or modo_preview) %}
                                 <i class="bi bi-check-lg"></i>
                             {% elif es_activa %}
                                 <i class="bi bi-caret-right-fill text-warning"></i>
@@ -241,7 +242,7 @@
                         </div>
                         <div class="pe-2">
                             <span class="d-block fw-semibold" style="line-height: 1.35; font-size: 1.05rem;">{{ l_loop.titulo }}</span>
-                            {% if esta_completada and current_user.rol == 'estudiante' %}
+                            {% if esta_completada and (current_user.rol == 'estudiante' or modo_preview) %}
                                 <span class="d-block sidebar-text-success fw-bolder" style="font-size: 0.75rem; margin-top: 5px; letter-spacing: 0.5px;"><i class="bi bi-check2-circle me-1"></i> APROBADA</span>
                             {% elif es_activa %}
                                 <span class="d-block sidebar-text-warning fw-bolder" style="font-size: 0.75rem; margin-top: 5px; letter-spacing: 0.5px;"><i class="bi bi-play-circle me-1"></i> LECCIÓN ACTUAL</span>
@@ -258,6 +259,11 @@
         <div class="document-canvas">
             <!-- Cabecera de la Lección Específica -->
             <div class="leccion-header-interior">
+                {% if leccion.imagen_portada %}
+                <div class="mb-4 rounded-3 overflow-hidden shadow-sm" style="max-height: 280px; border-radius: 14px;">
+                    <img src="{{ leccion.imagen_portada }}" alt="Portada {{ leccion.titulo }}" style="width: 100%; max-height: 280px; object-fit: cover; display: block;">
+                </div>
+                {% endif %}
                 <div class="d-flex align-items-center mb-3">
                     <div class="bg-primary text-white d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 45px; height: 45px; border-radius: 12px; background: #0B2545 !important;">
                         <span class="fs-4 fw-bolder">{{ leccion.orden }}</span>
@@ -269,7 +275,19 @@
 
         <div class="reading-container">
 
-            {% if current_user.rol == 'estudiante' %}
+            {% if modo_preview %}
+            <!-- Banner de modo preview para docentes -->
+            <div class="alert border-0 mb-4 d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #fef3c7, #fde68a); border-left: 5px solid #f59e0b !important; border-radius: 12px;">
+                <div>
+                    <i class="bi bi-eye-fill me-2 text-warning fs-5"></i>
+                    <strong style="color:#92400e;">Modo Vista Previa:</strong>
+                    <span style="color:#78350f;"> Así ven esta lección tus alumnos. Los ejercicios e interacciones están desactivados.</span>
+                </div>
+                <a href="{{ url_for('cursos.vista_alumno', id=curso_obj.id) }}" class="btn btn-warning btn-sm fw-bold rounded-3 ms-3 text-nowrap">
+                    <i class="bi bi-arrow-left me-1"></i> Volver al Curso
+                </a>
+            </div>
+            {% elif current_user.rol == 'estudiante' %}
                 {% if completada %}
                 <div class="banner-completada">
                     <i class="bi bi-check-circle-fill fs-4"></i>
@@ -420,7 +438,7 @@
                 <!-- Botón Anterior -->
                 <div class="mb-3 mb-md-0">
                     {% if prev_id.val %}
-                    <a href="{{ url_for('cursos.ver_leccion', id=prev_id.val) }}" class="btn text-secondary fw-bold px-4 py-2 shadow-sm" style="background: #ffffff; border: 2px solid #cbd5e1; border-radius: 12px; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                    <a href="{{ url_for('cursos.vista_alumno_leccion', id_curso=curso_obj.id, id_leccion=prev_id.val) if modo_preview else url_for('cursos.ver_leccion', id=prev_id.val) }}" class="btn text-secondary fw-bold px-4 py-2 shadow-sm" style="background: #ffffff; border: 2px solid #cbd5e1; border-radius: 12px; transition: 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
                         <i class="bi bi-arrow-left me-2"></i> Lección Anterior
                     </a>
                     {% endif %}
@@ -434,19 +452,19 @@
                         </a>
                     {% endif %}
                     
-                    {% if current_user.rol == 'docente' or current_user.rol == 'administrador' %}
+                    {% if (current_user.rol == 'docente' or current_user.rol == 'administrador') and not modo_preview %}
                         <a href="{{ url_for('cursos.nueva_leccion', id_curso=leccion.id_curso) }}" class="btn text-white fw-bold px-4 py-2 shadow-sm" style="background: #16A34A; border: 2px solid #14532d; border-radius: 12px;">
                             <i class="bi bi-plus-circle-fill me-1"></i> Nueva Lección
                         </a>
                     {% endif %}
                     
                     {% if next_id.val %}
-                        <a href="{{ url_for('cursos.ver_leccion', id=next_id.val) }}" class="btn text-dark fw-bolder px-5 py-2 shadow-sm" style="background: #FDE047; border: 2px solid #eab308; border-radius: 12px; transition: 0.2s;" onmouseover="this.style.background='#fef08a'" onmouseout="this.style.background='#FDE047'">
+                        <a href="{{ url_for('cursos.vista_alumno_leccion', id_curso=curso_obj.id, id_leccion=next_id.val) if modo_preview else url_for('cursos.ver_leccion', id=next_id.val) }}" class="btn text-dark fw-bolder px-5 py-2 shadow-sm" style="background: #FDE047; border: 2px solid #eab308; border-radius: 12px; transition: 0.2s;" onmouseover="this.style.background='#fef08a'" onmouseout="this.style.background='#FDE047'">
                             Siguiente lección <i class="bi bi-arrow-right ms-2"></i>
                         </a>
                     {% else %}
                         <!-- Última lección -->
-                        <a href="{{ url_for('cursos.ver_curso', id=curso_obj.id) }}" class="btn text-white fw-bolder px-5 py-2 shadow-sm" style="background: #22C55E; border: 2px solid #16A34A; border-radius: 12px;">
+                        <a href="{{ url_for('cursos.vista_alumno', id=curso_obj.id) if modo_preview else url_for('cursos.ver_curso', id=curso_obj.id) }}" class="btn text-white fw-bolder px-5 py-2 shadow-sm" style="background: #22C55E; border: 2px solid #16A34A; border-radius: 12px;">
                             <i class="bi bi-trophy-fill me-2 text-warning"></i> Resumen de Curso
                         </a>
                     {% endif %}
