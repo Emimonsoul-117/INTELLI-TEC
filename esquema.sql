@@ -236,5 +236,5 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- -----------------------------------------------------------------------------------
 -- SEED DATA (Opcional: Crear admin inicial)
--- INSERT INTO usuarios (email, password_hash, nombre, rol) VALUES ('admin@matatucas.com', '...', 'Administrador', 'administrador');
+-- INSERT INTO usuarios (email, password_hash, nombre, rol) VALUES ('admin@itst.edu.mx', '...', 'Administrador', 'administrador');
 -- -----------------------------------------------------------------------------------

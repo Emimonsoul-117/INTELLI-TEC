@@ -26,11 +26,11 @@ from ..servicios.cloudinary_servicio import subir_imagen_portada, eliminar_image
 
 
 def _generar_codigo_curso_unico():
-    """Código corto legible para compartir (ej. MTC-A1B2C3D4)."""
+    """Código corto legible para compartir (ej. ITC-A1B2C3D4)."""
     alphabet = string.ascii_uppercase + string.digits
     while True:
         sufijo = ''.join(secrets.choice(alphabet) for _ in range(8))
-        codigo = f'MTC-{sufijo}'
+        codigo = f'ITC-{sufijo}'
         if not Curso.query.filter_by(codigo_curso=codigo).first():
             return codigo
 

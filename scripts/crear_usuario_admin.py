@@ -12,7 +12,7 @@ app = crear_app()
 
 def crear_admin():
     with app.app_context():
-        email = os.environ.get('ADMIN_EMAIL', 'admin@mathai.com')
+        email = os.environ.get('ADMIN_EMAIL', 'admin@itst.edu.mx')
         password = os.environ.get('ADMIN_PASSWORD', 'admin123')
         
         # Buscar si ya existe
