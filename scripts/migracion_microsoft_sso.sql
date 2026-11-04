@@ -1,7 +1,7 @@
 -- Script de migración para agregar soporte Microsoft SSO
--- Ejecutar en la base de datos `Matatucas-db` existente
+-- Ejecutar en la base de datos `intelli_tec_db` existente
 
-USE `Matatucas-db`;
+USE `intelli_tec_db`;
 
 -- Hacer password_hash nullable (ya no se requiere para login con Microsoft)
 ALTER TABLE usuarios MODIFY COLUMN password_hash VARCHAR(256) NULL;

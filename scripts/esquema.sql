@@ -1,9 +1,9 @@
 -- Script de creación de base de datos para MathAI LMS
 -- Ejecutar en phpMyAdmin o consola MySQL
 
-DROP DATABASE IF EXISTS `Matatucas-db`;
-CREATE DATABASE `Matatucas-db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `Matatucas-db`;
+DROP DATABASE IF EXISTS `intelli_tec_db`;
+CREATE DATABASE `intelli_tec_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `intelli_tec_db`;
 
 -- Tabla de Usuarios
 CREATE TABLE usuarios (

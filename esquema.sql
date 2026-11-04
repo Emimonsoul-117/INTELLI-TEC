@@ -1,9 +1,9 @@
--- Script de creación de base de datos para Matatucas LMS (VERSION COMPLETA - PRODUCCIÓN)
--- Matatucas-db
+-- Script de creación de base de datos para INTELLI-TEC LMS (VERSION COMPLETA - PRODUCCIÓN)
+-- intelli_tec_db
 -- -----------------------------------------------------------------------------------
 
-CREATE DATABASE IF NOT EXISTS `Matatucas-db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `Matatucas-db`;
+CREATE DATABASE IF NOT EXISTS `intelli_tec_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `intelli_tec_db`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 

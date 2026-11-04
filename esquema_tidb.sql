@@ -1,4 +1,4 @@
--- Script de creación de base de datos para Matatucas LMS (OPTIMIZADO PARA TiDB CLOUD)
+-- Script de creación de base de datos para INTELLI-TEC LMS (OPTIMIZADO PARA TiDB CLOUD)
 -- -----------------------------------------------------------------------------------
 -- NOTA PARA TiDB CLOUD:
 -- 1. Se eliminaron las sentencias CREATE DATABASE y USE ya que en TiDB Cloud

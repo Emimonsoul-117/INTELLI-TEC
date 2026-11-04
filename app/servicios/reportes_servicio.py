@@ -22,7 +22,7 @@ def generar_reporte_docente_pdf(docente_nombre, cursos_data):
     normal_style = styles['Normal']
     
     # Encabezado
-    elements.append(Paragraph(f"Reporte de Desempeño Docente - Matatucas Pro", title_style))
+    elements.append(Paragraph(f"Reporte de Desempeño Docente - INTELLI-TEC", title_style))
     elements.append(Paragraph(f"Docente: {docente_nombre}", styles['Heading2']))
     elements.append(Paragraph(f"Fecha de generación: {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style))
     elements.append(Spacer(1, 12))
@@ -45,7 +45,7 @@ def generar_reporte_docente_pdf(docente_nombre, cursos_data):
     
     elements.append(t)
     elements.append(Spacer(1, 24))
-    elements.append(Paragraph("Este documento es generado automáticamente por el sistema de Gestión Académica Matatucas Pro.", styles['Italic']))
+    elements.append(Paragraph("Este documento es generado automáticamente por el sistema de Gestión Académica INTELLI-TEC.", styles['Italic']))
     
     doc.build(elements)
     buffer.seek(0)

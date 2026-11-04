@@ -1439,7 +1439,7 @@ def descargar_certificado(id):
     fecha_str = datetime.utcnow().strftime('%d de %B de %Y')
 
     elementos.append(Spacer(1, 1*cm))
-    elementos.append(Paragraph("🎓 MATATUCAS", estilo_titulo))
+    elementos.append(Paragraph("INTELLI-TEC", estilo_titulo))
     elementos.append(Paragraph("Plataforma Educativa con IA", estilo_subtitulo))
     elementos.append(Spacer(1, 0.5*cm))
     elementos.append(HRFlowable(width="80%", thickness=2, color=colors.HexColor('#4F46E5')))

@@ -66,7 +66,7 @@ def subir_imagen_portada(archivo, carpeta='portadas', public_id_prefix='img'):
 
     resultado = cloudinary.uploader.upload(
         archivo.stream,
-        folder=f'matatucas/{carpeta}',
+        folder=f'intelli-tec/{carpeta}',
         resource_type='image',
         format='webp',          # Convierte a WebP automáticamente (más ligero)
         quality='auto:good',    # Optimización automática de calidad
@@ -90,7 +90,7 @@ def eliminar_imagen(url_cloudinary):
     try:
         _configurar_cloudinary()
         # Extraer el public_id del URL
-        # Ejemplo URL: https://res.cloudinary.com/demo/image/upload/v123/matatucas/portadas/img.webp
+        # Ejemplo URL: https://res.cloudinary.com/demo/image/upload/v123/intelli-tec/portadas/img.webp
         partes = url_cloudinary.split('/upload/')
         if len(partes) == 2:
             public_id_con_ext = partes[1]

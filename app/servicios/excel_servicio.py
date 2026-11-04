@@ -46,13 +46,13 @@ def generar_excel_alumnos(curso_titulo, estudiantes_data):
     # ─── Título ───
     ws.merge_cells('A1:I1')
     title_cell = ws['A1']
-    title_cell.value = f'📋 Reporte de Alumnos — {curso_titulo}'
+    title_cell.value = f'Reporte de Alumnos — {curso_titulo}'
     title_cell.font = title_font
     title_cell.alignment = Alignment(horizontal='left', vertical='center')
 
     ws.merge_cells('A2:I2')
     sub_cell = ws['A2']
-    sub_cell.value = f'Generado: {datetime.now().strftime("%d/%m/%Y %H:%M")} · Matatucas LMS'
+    sub_cell.value = f'Generado: {datetime.now().strftime("%d/%m/%Y %H:%M")} · INTELLI-TEC LMS'
     sub_cell.font = subtitle_font
 
     ws.row_dimensions[1].height = 30

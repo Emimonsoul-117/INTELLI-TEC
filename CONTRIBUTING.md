@@ -1,77 +1,43 @@
-# Guía de Contribución a Matatucas LMS 🤝
+# Normativa de Desarrollo y Mantenimiento Privado: INTELLI-TEC LMS
 
-¡Gracias por tu interés en contribuir a **Matatucas**! Este documento contiene los lineamientos y estándares técnicos necesarios para colaborar de manera ordenada y segura en este repositorio.
-
----
-
-## 📋 Código de Conducta
-
-Nos comprometemos a brindar un entorno inclusivo, respetuoso y profesional para todos los colaboradores, estudiantes y educadores.
+Este proyecto es propiedad intelectual exclusiva del **Instituto Tecnológico Superior de Teziutlán (ITST)**. Al ser una plataforma institucional de uso y desarrollo estrictamente privado, **no se admiten contribuciones, bifurcaciones (forks) ni pull requests de personas externas a la institución**.
 
 ---
 
-## 🛠️ Flujo de Trabajo Recomendado
+## 1. Alcance Institucional
 
-1. **Haz un Fork** del repositorio a tu cuenta personal de GitHub.
-2. **Clona tu fork** localmente:
-   ```bash
-   git clone https://github.com/<tu-usuario>/INTELLI-TEC.git
-   cd INTELLI-TEC/proyecto-matatucas
-   ```
-3. **Crea una rama descriptiva** para tu funcionalidad o corrección:
-   ```bash
-   git checkout -b feature/nueva-funcionalidad
-   # o para corrección de bugs:
-   git checkout -b fix/correccion-bug
-   ```
-4. **Instala las dependencias y crea tu archivo `.env`**:
-   ```bash
-   cp .env.example .env
-   pip install -r requirements.txt
-   ```
-5. **Realiza tus cambios** manteniendo los estándares de código.
-6. **Ejecuta las pruebas de sintaxis**:
+El desarrollo, mantenimiento correctivo y evolutivo de **INTELLI-TEC** está reservado exclusivamente para:
+- Personal docente e investigadores autorizados por la Dirección del Instituto Tecnológico Superior de Teziutlán.
+- Alumnos residentes o prestadores de servicio social debidamente acreditados bajo convenios institucionales de confidencialidad y cesión de derechos.
+- Administradores de sistemas y tecnologías de la información del ITST.
+
+---
+
+## 2. Flujo de Trabajo para Desarrolladores Autorizados
+
+1. **Ramas de Trabajo**:
+   - Todo desarrollo o corrección interna debe efectuarse en ramas designadas por el equipo institucional (`feature/nombre-modulo` o `fix/descripcion-incidencia`).
+   - La rama principal (`master`) está protegida y únicamente el personal autorizado puede realizar despliegues a entornos de producción.
+2. **Entorno de Pruebas**:
+   - Utilizar el archivo de plantilla `.env.example` para levantar instancias locales de desarrollo.
+   - Prohibido utilizar credenciales de bases de datos de producción o claves API institucionales en entornos personales no autorizados.
+3. **Verificación de Sintaxis y Pruebas**:
+   - Todo cambio debe compilar y ejecutarse sin errores antes de su integración:
    ```bash
    python -m py_compile $(find app/ -name "*.py")
    ```
-7. **Haz commit con mensajes claros y concisos** siguiendo el estándar de Commits Convencionales:
-   ```bash
-   git commit -m "feat(cursos): agregar exportación de notas en formato CSV"
-   git commit -m "fix(auth): corregir validación de token CSRF en auto-completado"
-   ```
-8. **Envía tus cambios a tu repositorio remoto**:
-   ```bash
-   git push origin feature/nueva-funcionalidad
-   ```
-9. **Abre un Pull Request (PR)** hacia la rama principal (`master` o `main`) describiendo los cambios realizados, el problema que resuelven y capturas de pantalla si involucra cambios en la interfaz.
 
 ---
 
-## 📐 Estándares de Código y Buenas Prácticas
+## 3. Estándares Técnicos y de Seguridad
 
-### Backend (Python / Flask)
-- Seguir las pautas de estilo **PEP 8** (nombres de variables en minúsculas con guiones bajos, clases en CamelCase, 4 espacios de indentación).
-- **Protección de Datos y Secretos**: NUNCA commitear archivos `.env`, contraseñas en texto plano, claves API o tokens.
-- **Consultas a la Base de Datos**: Utilizar siempre el ORM SQLAlchemy con consultas parametrizadas. Evitar concatenaciones de cadenas en sentencias SQL.
-- **Control de Acceso**: Todo nuevo endpoint que modifique o acceda a recursos debe estar protegido con `@login_required` y los decoradores de rol correspondientes (`@docente_required`, `@admin_required`, `@curso_owner_required`).
-- **Seguridad en Formularios y APIs**: Incluir siempre el token CSRF (`csrf_token()`) en formularios POST y la cabecera `X-CSRFToken` en peticiones AJAX/fetch.
-
-### Frontend (HTML / CSS / JavaScript)
-- Mantener la coherencia con el diseño Bootstrap 5 y la paleta de colores institucional (`#0B2545`, `#1B396A`, `#F97316`).
-- Fórmulas matemáticas deben escribirse con sintaxis LaTeX estándar utilizando delimitadores `\( ... \)` para fórmulas en línea o `\[ ... \]` para fórmulas destacadas (renderizadas por KaTeX).
-- Manejar adecuadamente estados de carga (spinners/loaders) y mensajes de retroalimentación claros (toasts o alertas flotantes).
+- **Protección de Datos Personales**: Conforme a la legislación de protección de datos personales en posesión de sujetos obligados, ninguna información de estudiantes (nombres, matrículas, correos institucionales, calificaciones) debe exponerse en código, logs o repositorios.
+- **Consultas Parametrizadas**: Emplear siempre el ORM SQLAlchemy para interactuar con la base de datos y evitar cualquier concatenación directa de cadenas en SQL.
+- **Control de Acceso (RBAC)**: Todo endpoint institucional debe validar obligatoriamente la sesión (`@login_required`) y el rol asignado (`@admin_required`, `@docente_required`, `@curso_owner_required`).
+- **Seguridad en Formularios y APIs**: Incluir siempre el token CSRF (`csrf_token()`) en formularios POST y la cabecera `X-CSRFToken` en peticiones asíncronas (fetch/AJAX).
 
 ---
 
-## 🐛 Reporte de Errores (Bugs)
+## 4. Confidencialidad y Propiedad Intelectual
 
-Si encuentras un bug, por favor abre un **Issue** en GitHub detallando:
-1. Pasos exactos para reproducir el problema.
-2. Comportamiento observado vs. comportamiento esperado.
-3. Rol del usuario autenticado (estudiante, docente o administrador).
-4. Navegador y sistema operativo utilizado.
-5. Capturas de pantalla o logs de consola si aplica.
-
----
-
-¡Agradecemos tu valiosa colaboración para hacer de Matatucas una mejor plataforma educativa!
+Cualquier aportación, módulo o mejora desarrollada dentro del marco del proyecto pertenecerá en su totalidad al **Instituto Tecnológico Superior de Teziutlán**, conforme a los estatutos institucionales y a la Ley Federal de Protección a la Propiedad Industrial.
