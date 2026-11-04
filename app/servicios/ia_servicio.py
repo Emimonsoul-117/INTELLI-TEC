@@ -11,9 +11,16 @@ MAX_REINTENTOS = 3
 
 class ServicioIA:
     def __init__(self):
-        pass
+        self.api_key = os.environ.get('GOOGLE_API_KEY')
+        if self.api_key:
+            try:
+                genai.configure(api_key=self.api_key)
+            except Exception as e:
+                print(f'Error configurando Google Gemini: {e}')
 
     def _llamar_modelo(self, prompt):
+        if not self.api_key:
+            raise ValueError('La clave GOOGLE_API_KEY no está configurada en las variables de entorno.')
         ultimo_error = None
         modelos_a_probar = ['gemini-2.5-flash', 'gemini-1.5-flash']
         

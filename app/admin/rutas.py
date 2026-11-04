@@ -167,6 +167,10 @@ def editar_usuario(id):
             
             # De docente/admin a estudiante
             if nuevo_rol == 'estudiante':
+                cursos_asociados = Curso.query.filter_by(id_docente=usuario.id).count()
+                if cursos_asociados > 0:
+                    flash(f'No se puede cambiar el rol a estudiante: el usuario tiene {cursos_asociados} curso(s) asignado(s). Reasigna los cursos primero.', 'peligro')
+                    return redirect(url_for('admin.editar_usuario', id=usuario.id))
                 # Borrar perfil docente
                 docente = Docente.query.get(usuario.id)
                 if docente:
@@ -221,30 +225,48 @@ def editar_usuario(id):
 @login_required
 @admin_required
 def eliminar_usuario(id):
+    from ..modelos import (
+        Inscripcion, LeccionCompletada, IntentoEjercicio,
+        InsigniaEstudiante, InventarioEstudiante, ConfiguracionUsuario
+    )
     usuario = Usuario.query.get_or_404(id)
     
     if usuario.id == current_user.id:
         flash('No puedes eliminar tu propia cuenta.', 'peligro')
         return redirect(url_for('admin.lista_usuarios'))
-        
-    # Al eliminar usuario, SQLAlchemy manejo cascada si está configurado, 
-    # si no, habría que borrar dependencias manual. 
-    # Por ahora asumimos borrado básico.
-    
-    # Borrar perfil asociado manualmente para asegurar
-    if usuario.rol == 'estudiante':
-        est = Estudiante.query.get(id)
-        if est: bd.session.delete(est)
-    elif usuario.rol == 'docente' or usuario.rol == 'administrador':
-        doc = Docente.query.get(id)
-        if doc: bd.session.delete(doc)
-        
-    bd.session.delete(usuario)
-    bd.session.commit()
-    
-    registrar_accion('ELIMINAR_USUARIO', {'id_eliminado': id, 'nombre': usuario.nombre})
-    
-    flash('Usuario eliminado permanentemente.', 'exito')
+
+    try:
+        nombre_eliminado = usuario.nombre
+
+        # Si es docente/admin y tiene cursos, desasociar
+        cursos_asociados = Curso.query.filter_by(id_docente=id).all()
+        for c in cursos_asociados:
+            c.id_docente = None
+
+        # Limpiar registros relacionados a estudiante
+        IntentoEjercicio.query.filter_by(id_estudiante=id).delete(synchronize_session=False)
+        LeccionCompletada.query.filter_by(id_estudiante=id).delete(synchronize_session=False)
+        InsigniaEstudiante.query.filter_by(id_estudiante=id).delete(synchronize_session=False)
+        InventarioEstudiante.query.filter_by(id_estudiante=id).delete(synchronize_session=False)
+        Inscripcion.query.filter_by(id_estudiante=id).delete(synchronize_session=False)
+
+        # Limpiar configuracion de usuario y perfiles
+        ConfiguracionUsuario.query.filter_by(id_usuario=id).delete(synchronize_session=False)
+        Estudiante.query.filter_by(id_usuario=id).delete(synchronize_session=False)
+        Docente.query.filter_by(id_usuario=id).delete(synchronize_session=False)
+
+        # Limpiar auditoría del usuario
+        RegistroAuditoria.query.filter_by(id_usuario=id).delete(synchronize_session=False)
+
+        bd.session.delete(usuario)
+        bd.session.commit()
+
+        registrar_accion('ELIMINAR_USUARIO', {'id_eliminado': id, 'nombre': nombre_eliminado})
+        flash(f'Usuario "{nombre_eliminado}" eliminado permanentemente.', 'exito')
+    except Exception as e:
+        bd.session.rollback()
+        flash(f'Error al eliminar usuario: {e}', 'peligro')
+
     return redirect(url_for('admin.lista_usuarios'))
 
 @admin.route('/docentes')

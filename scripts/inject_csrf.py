@@ -1,7 +1,7 @@
 import os
 import re
 
-template_dir = r"c:\Users\emili\Documents\proyecto Matatucas\app\templates"
+template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "app", "templates"))
 
 # Regex para detectar una etiqueta form con method="POST"
 # que aún NO tenga csrf_token dentro (lo comprobaremos buscando csrf_token en el archivo).

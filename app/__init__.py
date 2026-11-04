@@ -18,6 +18,8 @@ def _ensure_codigo_curso_column(app):
     """Si la tabla cursos no tiene codigo_curso (BD creada antes del cambio de modelo), la añade."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 n = conn.execute(
                     text(
@@ -47,6 +49,8 @@ def _ensure_bloqueado_inscripciones_column(app):
     """Si la tabla inscripciones no tiene bloqueado (BD antigua), la añade."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 n = conn.execute(
                     text(
@@ -75,6 +79,8 @@ def _ensure_estado_cursos_column(app):
     """Asegura columna estado en cursos (sin 'revision' — publicación directa)."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 n = conn.execute(
                     text(
@@ -108,6 +114,8 @@ def _ensure_ejercicio_tipo_enum(app):
     """Amplía el ENUM de ejercicios.tipo con los nuevos tipos de pregunta."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 conn.execute(
                     text(
@@ -128,6 +136,8 @@ def _ensure_visibilidad_cursos_column(app):
     """Añade la columna visibilidad a cursos (global/privado)."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 n = conn.execute(
                     text(
@@ -153,6 +163,8 @@ def _ensure_imagen_portada_columns(app):
     """Asegura que las tablas cursos y lecciones tengan la columna imagen_portada."""
     with app.app_context():
         try:
+            if bd.engine.dialect.name != 'mysql':
+                return
             with bd.engine.begin() as conn:
                 # Comprobar cursos.imagen_portada
                 n_curso = conn.execute(
@@ -198,21 +210,27 @@ def crear_app(nombre_config='por_defecto'):
     login_manager.init_app(app)
     csrf.init_app(app)
     
-    _ensure_codigo_curso_column(app)
+    # Crea tablas nuevas faltantes si no existen
+    with app.app_context():
+        try:
+            from . import modelos  # noqa: F401
+            bd.create_all()
+        except Exception as exc:
+            app.logger.warning("No se pudo ejecutar bd.create_all(): %s", exc)
 
+    _ensure_codigo_curso_column(app)
     _ensure_bloqueado_inscripciones_column(app)
     _ensure_estado_cursos_column(app)
     _ensure_visibilidad_cursos_column(app)
     _ensure_ejercicio_tipo_enum(app)
     _ensure_imagen_portada_columns(app)
 
-    # Crea tablas nuevas faltantes (no altera tablas existentes).
-    # Esto permite que nuevas entidades (p. ej. intentos_ejercicios) aparezcan
-    # sin requerir migraciones completas mientras siga el esquema actual.
     with app.app_context():
-        from . import modelos  # noqa: F401
-        bd.create_all()
-        modelos.migrar_usuarios_sin_numero_control()
+        try:
+            from . import modelos
+            modelos.migrar_usuarios_sin_numero_control()
+        except Exception as exc:
+            app.logger.warning("No se pudo migrar usuarios sin número de control: %s", exc)
 
     # Registro de Blueprints
     from .auth import auth as auth_blueprint

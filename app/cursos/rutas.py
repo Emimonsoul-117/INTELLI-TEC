@@ -262,6 +262,20 @@ def crear_curso():
 @login_required
 def ver_curso(id):
     curso = Curso.query.get_or_404(id)
+
+    # Control de acceso para estudiantes
+    if current_user.rol == 'estudiante':
+        if curso.estado != 'publicado':
+            abort(404)
+        if curso.visibilidad == 'privado':
+            inscripcion_previa = Inscripcion.query.filter_by(
+                id_estudiante=current_user.id,
+                id_curso=id
+            ).first()
+            if not inscripcion_previa:
+                flash('Este curso es privado. Debes unirte utilizando el código proporcionado por tu docente.', 'advertencia')
+                return redirect(url_for('cursos.lista_cursos'))
+
     if not curso.codigo_curso:
         _asegurar_codigo_curso(curso)
         bd.session.commit()
@@ -812,11 +826,18 @@ def nueva_leccion(id_curso):
 # ─────────────────────────────────────
 # Inscribirse a un curso
 # ─────────────────────────────────────
-def _ejecutar_inscripcion_estudiante(id_estudiante, id_curso):
-    """Devuelve ('ok'|'ya'|'no_estudiante', id_curso). Hace commit si inscribe."""
+def _ejecutar_inscripcion_estudiante(id_estudiante, id_curso, ignorar_privacidad=False):
+    """Devuelve ('ok'|'ya'|'no_estudiante'|'no_encontrado'|'no_publicado', id_curso). Hace commit si inscribe."""
     usuario = Usuario.query.get(id_estudiante)
     if not usuario or usuario.rol != 'estudiante':
         return 'no_estudiante', id_curso
+
+    curso = Curso.query.get(id_curso)
+    if not curso:
+        return 'no_encontrado', id_curso
+
+    if curso.estado != 'publicado':
+        return 'no_publicado', id_curso
 
     if Inscripcion.query.filter_by(id_estudiante=id_estudiante, id_curso=id_curso).first():
         return 'ya', id_curso
@@ -833,11 +854,22 @@ def inscribir_curso(id):
         flash('Solo los estudiantes pueden inscribirse a cursos.', 'peligro')
         return redirect(url_for('cursos.ver_curso', id=id))
 
+    curso = Curso.query.get_or_404(id)
+    if curso.estado != 'publicado':
+        flash('Este curso aún no está publicado.', 'advertencia')
+        return redirect(url_for('cursos.lista_cursos'))
+
+    if curso.visibilidad == 'privado':
+        flash('Este curso es privado. Debes unirte utilizando su código de acceso.', 'advertencia')
+        return redirect(url_for('cursos.lista_cursos'))
+
     estado, _ = _ejecutar_inscripcion_estudiante(current_user.id, id)
     if estado == 'ya':
         flash('Ya estás inscrito en este curso.', 'info')
     elif estado == 'ok':
         flash('¡Inscripción exitosa! Bienvenido al curso.', 'exito')
+    elif estado == 'no_publicado':
+        flash('Este curso no está disponible para inscripción.', 'peligro')
     return redirect(url_for('cursos.ver_curso', id=id))
 
 
@@ -1202,13 +1234,13 @@ def nuevo_ejercicio(id_leccion):
 @login_required
 @docente_required
 def api_generar_ejercicio():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     tema = data.get('tema')
     nivel = data.get('nivel')
     tipo = data.get('tipo', 'opcion_multiple')
 
     if not tema or not nivel:
-        return {'error': 'Faltan parámetros'}, 400
+        return jsonify({'error': 'Faltan parámetros'}), 400
 
     from ..servicios.ia_servicio import ServicioIA
     servicio = ServicioIA()
@@ -1216,18 +1248,18 @@ def api_generar_ejercicio():
 
     if isinstance(ejercicio_generado, dict):
         if 'error' in ejercicio_generado:
-            return {'error': ejercicio_generado['error']}, 500
+            return jsonify({'error': ejercicio_generado['error']}), 500
         ejercicio_generado.setdefault('pasos', [])
-        return ejercicio_generado
+        return jsonify(ejercicio_generado)
     else:
-        return {'error': 'No se pudo generar el ejercicio'}, 500
+        return jsonify({'error': 'No se pudo generar el ejercicio'}), 500
 
 
 @cursos.route('/api/generar-teoria', methods=['POST'])
 @login_required
 @docente_required
 def api_generar_teoria():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     tema = data.get('tema')
     nivel = data.get('nivel')
 
@@ -1247,7 +1279,7 @@ def api_generar_teoria():
 @login_required
 @docente_required
 def api_generar_leccion_completa():
-    data = request.json or {}
+    data = request.get_json(silent=True) or {}
     tema = data.get('tema')
     nivel = data.get('nivel')
     num_ejercicios = data.get('num_ejercicios', 3)
@@ -1309,13 +1341,13 @@ def api_ejercicios_aleatorios():
 @login_required
 def api_explicar_ejercicio():
     """Genera una explicación paso a paso usando IA cuando el estudiante falla."""
-    data = request.json
+    data = request.get_json(silent=True) or {}
     enunciado = data.get('enunciado', '')
     respuesta_correcta = data.get('respuesta_correcta', '')
     respuesta_usuario = data.get('respuesta_usuario', '')
 
     if not enunciado or not respuesta_correcta:
-        return {'error': 'Faltan parámetros'}, 400
+        return jsonify({'error': 'Faltan parámetros'}), 400
 
     from ..servicios.ia_servicio import ServicioIA
     servicio = ServicioIA()
@@ -1328,17 +1360,17 @@ def api_explicar_ejercicio():
 @cursos.route('/api/chat-educativo', methods=['POST'])
 @login_required
 def api_chat_educativo():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     mensaje = data.get('mensaje')
     contexto = data.get('contexto', 'Matemáticas general')
 
     if not mensaje:
-        return {'error': 'Mensaje vacío'}, 400
+        return jsonify({'error': 'Mensaje vacío'}), 400
 
     from ..servicios.ia_servicio import ServicioIA
     servicio = ServicioIA()
     respuesta = servicio.chat_educativo(mensaje, contexto)
-    return {'respuesta': respuesta}
+    return jsonify({'respuesta': respuesta})
 
 
 # ─────────────────────────────────────

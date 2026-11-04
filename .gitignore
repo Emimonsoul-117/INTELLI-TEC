@@ -1,14 +1,12 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# C extensions
-*.so
-
-# Environments
+# Environments & Secrets
 .env
-keys cloudinary
+.env.*
+!.env.example
+keys*
+*.pem
+*.key
+
+# Virtual Environments
 .venv
 env/
 venv/
@@ -16,11 +14,24 @@ ENV/
 env.bak/
 venv.bak/
 
-# IDEs
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDEs & OS
 .idea/
 .vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
 
-# Project specifics
+# Project specifics & Databases
 *.db
+*.sqlite
+*.sqlite3
 *.log
 tmp/
+instance/

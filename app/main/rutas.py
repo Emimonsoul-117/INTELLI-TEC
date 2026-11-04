@@ -98,15 +98,14 @@ def leaderboard():
     
     mi_posicion = None
     if current_user.rol == 'estudiante':
-        todos = (
-            bd.session.query(Estudiante)
-            .order_by(Estudiante.puntos_totales.desc())
-            .all()
+        est = Estudiante.query.get(current_user.id)
+        mis_puntos = (est.puntos_totales or 0) if est else 0
+        superiores = (
+            bd.session.query(bd.func.count(Estudiante.id_usuario))
+            .filter(Estudiante.puntos_totales > mis_puntos)
+            .scalar() or 0
         )
-        for i, e in enumerate(todos):
-            if e.id_usuario == current_user.id:
-                mi_posicion = i + 1
-                break
+        mi_posicion = superiores + 1
     
     return render_template('main/leaderboard.html',
                            top_estudiantes=top_estudiantes,
@@ -279,14 +278,15 @@ def ranking():
     # Buscar el puesto del usuario actual si es estudiante y está participando
     mi_ranking = None
     if current_user.rol == 'estudiante' and not ocultar_me:
-        puntos_actual = Estudiante.query.get(current_user.id).puntos_totales
+        est = Estudiante.query.get(current_user.id)
+        puntos_actual = (est.puntos_totales or 0) if est else 0
         # Calcular posición cuenta cuántos tienen estrictamente más puntos
         posicion = (
             bd.session.query(bd.func.count(Estudiante.id_usuario))
             .outerjoin(ConfiguracionUsuario, Estudiante.id_usuario == ConfiguracionUsuario.id_usuario)
-            .filter(bd.or_(ConfiguracionUsuario.ocultar_ranking == False, ConfiguracionUsuario.ocultar_ranking == None))
+            .filter(bd.or_(ConfiguracionUsuario.ocultar_ranking == False, ConfiguracionUsuario.ocultar_ranking.is_(None)))
             .filter(Estudiante.puntos_totales > puntos_actual)
-            .scalar()
+            .scalar() or 0
         )
         mi_ranking = posicion + 1
         

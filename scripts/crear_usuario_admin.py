@@ -1,21 +1,27 @@
+import os
+import sys
+
+# Permitir ejecutar el script directamente desde cualquier directorio
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from app import crear_app, bd
-from app.modelos import Usuario
+from app.modelos import Usuario, Docente, asegurar_fila_docente_si_falta
 from werkzeug.security import generate_password_hash
 
 app = crear_app()
 
 def crear_admin():
     with app.app_context():
-        email = 'admin@mathai.com'
-        password = 'admin123'
+        email = os.environ.get('ADMIN_EMAIL', 'admin@mathai.com')
+        password = os.environ.get('ADMIN_PASSWORD', 'admin123')
         
         # Buscar si ya existe
         usuario = Usuario.query.filter_by(email=email).first()
         
         if usuario:
-            print(f"El usuario {email} ya existe. Actualizando contraseña...")
+            print(f"El usuario {email} ya existe. Actualizando contraseña y rol...")
             usuario.password_hash = generate_password_hash(password, method='scrypt')
-            usuario.rol = 'administrador' # Asegurar rol
+            usuario.rol = 'administrador'
         else:
             print(f"Creando nuevo usuario administrador {email}...")
             usuario = Usuario(
@@ -26,6 +32,9 @@ def crear_admin():
                 numero_control='ADM001'
             )
             bd.session.add(usuario)
+            bd.session.flush()
+
+        asegurar_fila_docente_si_falta(usuario)
         
         try:
             bd.session.commit()

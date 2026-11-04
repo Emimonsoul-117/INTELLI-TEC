@@ -1,6 +1,7 @@
 import re
 from flask import render_template, redirect, url_for, flash, request, session, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.security import check_password_hash
 from . import auth
 from ..modelos import Usuario, Estudiante, Docente, asegurar_fila_docente_si_falta
 from .. import bd
@@ -86,11 +87,36 @@ def login():
     return redirect(auth_url)
 
 
-@auth.route('/login-page')
+@auth.route('/login-page', methods=['GET', 'POST'])
 def login_page():
-    """Muestra la página de login con el botón de Microsoft."""
+    """Muestra la página de login (soporta Microsoft 365 y autenticación con contraseña)."""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.dashboard'))
+
+    if request.method == 'POST':
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
+
+        if not email or not password:
+            flash('Por favor ingresa tu correo y contraseña.', 'peligro')
+            return render_template('auth/login.html')
+
+        usuario = Usuario.query.filter_by(email=email).first()
+        if not usuario or not usuario.password_hash or not check_password_hash(usuario.password_hash, password):
+            flash('Credenciales incorrectas. Verifica tu correo y contraseña.', 'peligro')
+            return render_template('auth/login.html')
+
+        login_user(usuario, remember=True)
+        asegurar_fila_docente_si_falta(usuario)
+        bd.session.commit()
+
+        if usuario.rol == 'estudiante':
+            from ..servicios.gamificacion_servicio import ServicioGamificacion
+            ServicioGamificacion().actualizar_racha_login(usuario.id)
+
+        flash(f'¡Bienvenido de vuelta, {usuario.nombre_usuario}!', 'exito')
+        return redirect(url_for('main.dashboard'))
+
     return render_template('auth/login.html')
 
 

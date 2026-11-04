@@ -8,7 +8,7 @@ import sys
 import os
 
 # Asegurarse de estar en el directorio del proyecto
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import crear_app, bd
 

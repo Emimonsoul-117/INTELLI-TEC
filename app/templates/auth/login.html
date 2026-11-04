@@ -2,12 +2,6 @@
 
 {% block content %}
 <style>
-    /* Ocultar las alertas predeterminadas en el login para un diseño ultra limpio. */
-    .alert-info,
-    .alert-warning {
-        display: none !important;
-    }
-
     .login-container {
         min-height: calc(100vh - 120px);
         display: flex;
@@ -126,7 +120,7 @@
                     avance de forma segura.
                 </p>
 
-                <div class="d-grid shadow-sm" style="border-radius: 12px;">
+                <div class="d-grid shadow-sm mb-3" style="border-radius: 12px;">
                     <a href="{{ url_for('auth.login') }}" class="ms-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 21 21">
                             <rect x="1" y="1" width="9" height="9" fill="#f25022" />
@@ -137,6 +131,34 @@
                         <span>Ingresar con Microsoft 365</span>
                     </a>
                 </div>
+
+                <div class="d-flex align-items-center my-3">
+                    <hr class="flex-grow-1 my-0 text-muted">
+                    <span class="px-2 text-muted fw-semibold" style="font-size: 0.75rem;">O CON CONTRASEÑA</span>
+                    <hr class="flex-grow-1 my-0 text-muted">
+                </div>
+
+                <!-- Formulario de acceso local / administración -->
+                <form method="POST" action="{{ url_for('auth.login_page') }}" class="text-start">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small fw-bold mb-1">Correo Electrónico</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                            <input type="email" name="email" class="form-control bg-light border-start-0" placeholder="tu_correo@teziutlan.tecnm.mx" required autocomplete="email">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold mb-1">Contraseña</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="password" class="form-control bg-light border-start-0" placeholder="••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2" style="background: #1B396A; border-color: #0B2545; border-radius: 10px; font-size: 0.9rem;">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+                    </button>
+                </form>
 
 
 

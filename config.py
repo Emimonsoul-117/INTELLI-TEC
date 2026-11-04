@@ -18,8 +18,8 @@ class Configuracion:
 
     # Cloudinary – Almacenamiento de imágenes en la nube
     CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
-    CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME') or 'kic6z6at'
-    CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY') or '852928788293492'
+    CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
+    CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY')
     CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
 
 class ConfiguracionDesarrollo(Configuracion):

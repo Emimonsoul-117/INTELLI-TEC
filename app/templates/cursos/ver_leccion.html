@@ -803,7 +803,7 @@
     function autoCompletarLeccion(leccionId) {
         fetch('/cursos/leccion/' + leccionId + '/auto-completar', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
             credentials: 'same-origin'
         })
             .then(r => r.json())

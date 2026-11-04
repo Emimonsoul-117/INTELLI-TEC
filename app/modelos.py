@@ -316,9 +316,12 @@ def generar_numero_control_personalizado(email):
 
 def migrar_usuarios_sin_numero_control():
     """Asigna un número de control personalizado a todos los usuarios que no tengan uno."""
-    usuarios_sin_control = Usuario.query.filter((Usuario.numero_control == None) | (Usuario.numero_control == '')).all()
+    usuarios_sin_control = Usuario.query.filter(
+        Usuario.numero_control.is_(None) | (Usuario.numero_control == '')
+    ).all()
     for usuario in usuarios_sin_control:
         control = generar_numero_control_personalizado(usuario.email)
         usuario.numero_control = control
+    if usuarios_sin_control:
         bd.session.commit()
 
